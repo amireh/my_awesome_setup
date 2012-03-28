@@ -1,0 +1,6 @@
+This set-up assumes you're running Arch, have a dual-head separate X-session screen setup (no Xinerama/TwinView), and have the following installed:
+
+  * awesome (from AUR)
+  * awesome-themes-git (from AUR)
+  * cairo-compmgr (from AUR)
+  * gnome (if you want to use the GNOME 3 backend version)
