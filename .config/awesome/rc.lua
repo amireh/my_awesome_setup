@@ -1,3 +1,5 @@
+package.path = "/home/kandie/Workspace/Projects/awesome_scripts/?.lua;" .. package.path
+
 -- Standard awesome library
 require("awful")
 require("awful.autofocus")
@@ -7,9 +9,12 @@ require("beautiful")
 -- Notification library
 require("naughty")
 require("lfs")
+require("daily_prayer_times")
+-- require("/home/kandie/Workspace/Projects/daily_prayer_times/daily_prayer_times.lua")
+-- require("volume")
 
  -- launch the Cairo Composite Manager
- awful.util.spawn_with_shell("cairo-compmgr &")
+ -- awful.util.spawn_with_shell("cairo-compmgr &")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -35,6 +40,9 @@ do
     end)
 end
 -- }}}
+
+-- print("Converted time: " .. offset_h .. ":" .. offset_m)
+-- print("Past prayer was: " .. prayer_names[past_prayer] .. ", upcoming prayer is: " .. prayer_names[next_prayer] .. " (in " .. offset .. " seconds)")
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
@@ -123,7 +131,10 @@ mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
 mytextclock = awful.widget.textclock({ align = "right" })
 
 -- Create a systray
-mysystray = widget({ type = "systray" })
+mysystray = {}
+for s = 1, screen.count() do
+  mysystray[s] = widget({ type = "systray" })
+end
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -170,6 +181,8 @@ mytasklist.buttons = awful.util.table.join(
                                               if client.focus then client.focus:raise() end
                                           end))
 
+myprayer_timer = require 'prayer_timer_widget'
+
 for s = 1, screen.count() do
     -- Create a promptbox for each screen
     mypromptbox[s] = awful.widget.prompt({ layout = awful.widget.layout.horizontal.leftright })
@@ -190,18 +203,21 @@ for s = 1, screen.count() do
                                           end, mytasklist.buttons)
 
     -- Create the wibox
-    mywibox[s] = awful.wibox({ position = "top", screen = s })
+    mywibox[s] = awful.wibox({ position = "top", screen = s, height = "18" })
     -- Add widgets to the wibox - order matters
     mywibox[s].widgets = {
         {
             mylauncher,
             mytaglist[s],
             mypromptbox[s],
+            -- volume_widget,
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
         mytextclock,
-        s == 1 and mysystray or nil,
+        s == 1 and myprayer_timer or nil,
+        -- s == 1 and mysystray or nil,
+        mysystray[s],
         mytasklist[s],
         layout = awful.widget.layout.horizontal.rightleft
     }
@@ -294,7 +310,7 @@ globalkeys = awful.util.table.join(
     -- Layout manipulation
     awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
     awful.key({ modkey, "Shift"   }, "k", function () awful.client.swap.byidx( -1)    end),
-    awful.key({ modkey, "Control" }, "Tab", function () awful.screen.focus_relative( 1) end),
+    awful.key({ modkey, "Shift" }, "Tab", function () awful.screen.focus_relative( 1) end),
     awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
     awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
     awful.key({ modkey,           }, "Tab",
@@ -341,12 +357,17 @@ globalkeys = awful.util.table.join(
     awful.key({ "Shift", altkey }, "f", function() awful.util.spawn("firefox") end),
     awful.key({ "Shift", altkey }, "t", function() awful.util.spawn("thunderbird") end),
     awful.key({ "Shift", altkey }, "b", function() awful.util.spawn("banshee") end),
-    awful.key({ "Shift", altkey }, "e", function() awful.util.spawn("subl -n -b /home/kandie") end),
-    awful.key({ "Shift", altkey }, "n", function() awful.util.spawn("leafpad") end)
+    awful.key({ "Shift", altkey }, "e", function() awful.util.spawn("subl -n -b /home/kandie/Workspace/Projects") end),
+    awful.key({ "Shift", altkey }, "n", function() awful.util.spawn("leafpad") end),
+
+    -- Volume Control
+    awful.key({ "Shift", altkey }, "+", function () awful.util.spawn("amixer set Master 5%+") end),
+    awful.key({ "Shift", altkey }, "-", function () awful.util.spawn("amixer set Master 5%-") end),
+    awful.key({ "Shift", altkey, "Control"}, "-", function () awful.util.spawn("amixer sset Master toggle") end)
 )
 
 clientkeys = awful.util.table.join(
-    awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
+    awful.key({ modkey,  "Shift"  }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ "Control"   }, "q",      function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
@@ -359,7 +380,7 @@ clientkeys = awful.util.table.join(
             -- minimized, since minimized clients can't have the focus.
             c.minimized = true
         end),
-    awful.key({ modkey,           }, "m",
+    awful.key({ modkey, "Shift"  }, "x",
         function (c)
             c.maximized_horizontal = not c.maximized_horizontal
             c.maximized_vertical   = not c.maximized_vertical
@@ -386,25 +407,25 @@ for i = 1, keynumber do
                             awful.tag.viewonly(tags[screen][i])
                         end
                   end),
-        awful.key({ modkey, "Control" }, __curr_key, -- "#" .. i + 9,
-                  function ()
-                      local screen = mouse.screen
-                      if tags[screen][i] then
-                          awful.tag.viewtoggle(tags[screen][i])
-                      end
-                  end),
-        awful.key({ modkey, "Shift" }, __curr_key, -- "#" .. i + 9,
+        -- awful.key({ modkey, "Control" }, __curr_key, -- "#" .. i + 9,
+        --           function ()
+        --               local screen = mouse.screen
+        --               if tags[screen][i] then
+        --                   awful.tag.viewtoggle(tags[screen][i])
+        --               end
+        --           end)
+        awful.key({ "Control", modkey }, __curr_key, -- "#" .. i + 9,
                   function ()
                       if client.focus and tags[client.focus.screen][i] then
                           awful.client.movetotag(tags[client.focus.screen][i])
                       end
-                  end),
-        awful.key({ modkey, "Control", "Shift" }, __curr_key, -- "#" .. i + 9,
-                  function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.toggletag(tags[client.focus.screen][i])
-                      end
                   end))
+        -- awful.key({ modkey, "Control", "Shift" }, __curr_key, -- "#" .. i + 9,
+        --           function ()
+        --               if client.focus and tags[client.focus.screen][i] then
+        --                   awful.client.toggletag(tags[client.focus.screen][i])
+        --               end
+        --           end))
 end
 
 clientbuttons = awful.util.table.join(
@@ -466,6 +487,6 @@ client.add_signal("manage", function (c, startup)
     end
 end)
 
-client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
-client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+-- client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
+-- client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}

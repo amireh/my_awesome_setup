@@ -20,11 +20,6 @@ if not awful.util.file_readable(themes .. themename .. "/theme.lua") then
 end
 themedir      = themes .. themename
 
-wallpaper1    = themedir .. "/background.jpg"
-wallpaper2    = themedir .. "/background.png"
-wallpaper3    = sharedthemes .. "/zenburn/zenburn-background.png"
-wallpaper4    = sharedthemes .. "/default/background.png"
-wpscript      = home .. "/.wallpaper"
 
 theme.wallpaper_cmd = { "fbsetbg -f /home/kandie/Pictures/Wallpapers/Current/screen1",
                         "fbsetbg -f /home/kandie/Pictures/Wallpapers/Current/screen2" }
@@ -38,21 +33,21 @@ end
 theme.font      = "sans 8"
 
 -- {{{ Colors
-theme.fg_normal = "#cccccc"
-theme.fg_focus  = "#8d8a4b"
-theme.fg_urgent = "#929392"
+theme.fg_normal = "#eeeeee"
+theme.fg_focus  = "#a7db67"
+theme.fg_urgent = "#ffc21c"
 theme.bg_normal = "#1c1d1c88"
 theme.bg_focus  = "#0c0d0c88"
 theme.bg_urgent = "#34353488"
 -- }}}
 
 -- {{{ Borders
+-- theme.border_width  = 2
 theme.border_width  = "1"
---theme.border_width  = "2"
---theme.border_normal = "#34353488"
+theme.border_normal = "#34353488"
 --theme.border_normal = "#2d4113"
 --theme.border_normal = "#586c2d"
-theme.border_normal = "#727352"
+-- theme.border_normal = "#727352"
 theme.border_focus  = "#586c2d"
 --theme.border_focus  = "#a2bf36"
 --theme.border_focus  = "#6886c1"
